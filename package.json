@@ -1,0 +1,30 @@
+{
+  "name": "ald-concept",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "sync": "ts-node src/sync.ts && npx prisma db pull && npx prisma generate",
+    "populate": "ts-node src/populate.ts",
+    "typeorm": "ts-node src/typeorm.ts",
+    "prisma:query": "ts-node src/prisma_query.ts",
+    "prisma:join": "ts-node src/prisma_join.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@prisma/client": "^5.13.0",
+    "dotenv": "^16.4.5",
+    "pg": "^8.11.5",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.20"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^8.4.1",
+    "@types/node": "^20.12.7",
+    "prisma": "^5.13.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}

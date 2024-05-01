@@ -1,0 +1,67 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model order {
+  id           String       @id(map: "PK_1031171c13130102495201e3e20") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt    DateTime     @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime     @default(now()) @db.Timestamp(6)
+  code         String       @db.VarChar
+  total        Int
+  totalWithTax Int
+  taxRate      Int
+  userId       String       @db.Uuid
+  user         user         @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_caabe91507b3379c7ba73637b84")
+  order_line   order_line[]
+}
+
+model order_line {
+  id               String           @id(map: "PK_01a7c973d9f30479647e44f9892") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt        DateTime         @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime         @default(now()) @db.Timestamp(6)
+  quantity         Int
+  unitPrice        Int
+  orderId          String           @db.Uuid
+  productvariantId String?          @db.Uuid
+  order            order            @relation(fields: [orderId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_239cfca2a55b98b90b6bef2e44f")
+  product_variant  product_variant? @relation(fields: [productvariantId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_3bda4a91c569f2db56db37b8b59")
+}
+
+model product {
+  id              String            @id(map: "PK_bebc9158e480b949565b4dc7a82") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt       DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime          @default(now()) @db.Timestamp(6)
+  name            String            @db.VarChar
+  description     String
+  slug            String            @db.VarChar
+  product_variant product_variant[]
+}
+
+model product_variant {
+  id          String       @id(map: "PK_1ab69c9935c61f7c70791ae0a9f") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt   DateTime     @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime     @default(now()) @db.Timestamp(6)
+  name        String       @db.VarChar
+  description String
+  sku         String       @db.VarChar
+  price       Int
+  productId   String       @db.Uuid
+  order_line  order_line[]
+  product     product      @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_6e420052844edf3a5506d863ce6")
+}
+
+model user {
+  id        String   @id(map: "PK_cace4a159ff9f2512dd42373760") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @db.Timestamp(6)
+  name      String   @db.VarChar
+  age       Int
+  password  String   @db.VarChar
+  order     order[]
+}
