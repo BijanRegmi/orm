@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client'
-// const prisma = new PrismaClient({ log: ["query", "info", "warn", "error"] });
-const prisma = new PrismaClient()
+const prisma = new PrismaClient({ log: ["query", "info", "warn", "error"] });
+// const prisma = new PrismaClient()
 
 const KEY = 'Prisma Join'
 
@@ -44,7 +44,7 @@ async function query() {
 
 async function main() {
   await init()
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 1; i++) {
     await query()
   }
 }
