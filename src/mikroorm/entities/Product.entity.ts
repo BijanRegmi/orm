@@ -1,16 +1,16 @@
 import {
+  BaseEntity,
+  Collection,
   Entity,
-  ManyToOne,
+  OneToMany,
   type Opt,
   PrimaryKey,
-  Property,
-  Ref
+  Property
 } from '@mikro-orm/core'
-import { Order } from './Order'
-import { ProductVariant } from './ProductVariant'
+import { ProductVariant } from './ProductVariant.entity'
 
 @Entity()
-export class OrderLine {
+export class Product extends BaseEntity {
   @PrimaryKey({ type: 'uuid', defaultRaw: `uuid_generate_v4()` })
   id!: string & Opt
 
@@ -30,19 +30,15 @@ export class OrderLine {
   })
   updatedAt!: Date & Opt
 
-  @Property()
-  quantity!: number
+  @Property({ type: 'string', length: -1 })
+  name!: string
 
-  @Property({ fieldName: 'unitPrice' })
-  unitPrice!: number
+  @Property({ type: 'string', length: -1 })
+  description!: string
 
-  @ManyToOne({ entity: () => Order, fieldName: 'orderId' })
-  orderId!: Ref<Order>
+  @Property({ type: 'string', length: -1 })
+  slug!: string
 
-  @ManyToOne({
-    entity: () => ProductVariant,
-    fieldName: 'productvariantId',
-    nullable: true
-  })
-  productvariantId?: Ref<ProductVariant>
+  @OneToMany({ entity: () => ProductVariant, mappedBy: 'productId' })
+  productVariantCollection = new Collection<ProductVariant>(this)
 }

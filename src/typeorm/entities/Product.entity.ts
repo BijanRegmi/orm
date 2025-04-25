@@ -10,7 +10,7 @@ import { ProductVariant } from './ProductVariant.entity'
 
 @Entity()
 export class Product {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn('uuid', { primaryKeyConstraintName: 'pk_product_id' })
   id: string
 
   @CreateDateColumn()
@@ -19,13 +19,13 @@ export class Product {
   @UpdateDateColumn()
   updatedAt: string
 
-  @Column()
+  @Column({ type: String })
   name: string
 
-  @Column('text')
+  @Column({ type: String })
   description: string
 
-  @Column()
+  @Column({ type: String })
   slug: string
 
   @OneToMany(() => ProductVariant, (productvariant) => productvariant.product)

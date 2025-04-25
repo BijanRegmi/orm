@@ -2,17 +2,20 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from 'typeorm'
-import { ProductVariant } from './ProductVariant.entity'
 import { Order } from './Order.entity'
+import { ProductVariant } from './ProductVariant.entity'
 
 @Entity()
 export class OrderLine {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn('uuid', {
+    primaryKeyConstraintName: 'pk_orderline_id'
+  })
   id: string
 
   @CreateDateColumn()
@@ -21,19 +24,34 @@ export class OrderLine {
   @UpdateDateColumn()
   updatedAt: string
 
-  @Column('int')
+  @Column({ type: Number })
   quantity: number
 
-  @Column('int')
+  @Column({ type: Number })
   unitPrice: number
 
-  @Column('uuid')
-  orderId: string
+  @ManyToOne(
+    () => ProductVariant,
+    (productVariant) => productVariant.orderLines
+  )
+  @JoinColumn({
+    name: 'productVariantId',
+    foreignKeyConstraintName: 'fk_orderline_productvariant'
+  })
+  productVariant: ProductVariant
 
-  @ManyToOne(() => ProductVariant)
-  productvariant: ProductVariant
+  @Column({ type: String })
+  @Index('idx_orderline_productvariant_id')
+  productVariantId: string
 
   @ManyToOne(() => Order, (order) => order.lines)
-  @JoinColumn({ name: 'orderId' })
+  @JoinColumn({
+    name: 'orderId',
+    foreignKeyConstraintName: 'fk_orderline_order'
+  })
   order: Order
+
+  @Column({ type: String })
+  @Index('idx_orderline_order_id')
+  orderId: string
 }

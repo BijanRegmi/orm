@@ -1,18 +1,19 @@
 import {
+  BaseEntity,
   Collection,
   Entity,
+  Index,
   ManyToOne,
   OneToMany,
   type Opt,
   PrimaryKey,
-  Property,
-  Ref
+  Property
 } from '@mikro-orm/core'
-import { OrderLine } from './OrderLine'
-import { User } from './User'
+import { OrderLine } from './OrderLine.entity'
+import { User } from './User.entity'
 
 @Entity()
-export class Order {
+export class Order extends BaseEntity {
   @PrimaryKey({ type: 'uuid', defaultRaw: `uuid_generate_v4()` })
   id!: string & Opt
 
@@ -32,20 +33,25 @@ export class Order {
   })
   updatedAt!: Date & Opt
 
-  @Property({ length: -1 })
+  @Property({ type: 'string', length: -1 })
   code!: string
 
-  @Property()
+  @Property({ type: 'integer' })
   total!: number
 
-  @Property({ fieldName: 'totalWithTax' })
+  @Property({ fieldName: 'totalWithTax', type: 'integer' })
   totalWithTax!: number
 
-  @Property({ fieldName: 'taxRate' })
+  @Property({ fieldName: 'taxRate', type: 'integer' })
   taxRate!: number
 
+  @Index({
+    name: 'idx_order_user_id',
+    expression:
+      'CREATE INDEX idx_order_user_id ON public."order" USING btree ("userId")'
+  })
   @ManyToOne({ entity: () => User, fieldName: 'userId' })
-  userId!: Ref<User>
+  userId!: User
 
   @OneToMany({ entity: () => OrderLine, mappedBy: 'orderId' })
   orderLineCollection = new Collection<OrderLine>(this)

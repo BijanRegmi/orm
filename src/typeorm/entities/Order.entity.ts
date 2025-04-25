@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -13,7 +14,7 @@ import { User } from './User.entity'
 
 @Entity()
 export class Order {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn('uuid', { primaryKeyConstraintName: 'pk_order_id' })
   id: string
 
   @CreateDateColumn()
@@ -22,25 +23,26 @@ export class Order {
   @UpdateDateColumn()
   updatedAt: string
 
-  @Column()
+  @Column({ type: String })
   code: string
 
-  @Column('int')
+  @Column({ type: Number })
   total: number
 
-  @Column('int')
+  @Column({ type: Number })
   totalWithTax: number
 
-  @Column('int')
+  @Column({ type: Number })
   taxRate: number
-
-  @Column('uuid')
-  userId: string
 
   @OneToMany(() => OrderLine, (orderLine) => orderLine.order)
   lines: OrderLine[]
 
   @ManyToOne(() => User, (user) => user.orders)
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: 'userId', foreignKeyConstraintName: 'fk_order_user' })
   user: User
+
+  @Column({ type: String })
+  @Index('idx_order_user_id')
+  userId: string
 }

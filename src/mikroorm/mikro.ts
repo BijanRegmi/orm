@@ -3,7 +3,7 @@ config()
 
 import { EntityGenerator } from '@mikro-orm/entity-generator'
 import { MikroORM } from '@mikro-orm/postgresql'
-import { Entities, User } from './entities'
+import Entities, { User } from './entities'
 
 let orm: Awaited<ReturnType<typeof MikroORM.init>>
 
@@ -24,7 +24,7 @@ async function query() {
   const em = orm.em.fork()
   console.time(KEY)
   await em.findAll(User, {
-    populate: ['orderCollection.orderLineCollection.productvariantId.productId']
+    populate: ['orderCollection.orderLineCollection.productVariantId.productId']
   })
   console.timeEnd(KEY)
   em.flush()

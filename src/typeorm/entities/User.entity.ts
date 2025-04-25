@@ -10,7 +10,7 @@ import { Order } from './Order.entity'
 
 @Entity()
 export class User {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn('uuid', { primaryKeyConstraintName: 'pk_user_id' })
   id: string
 
   @CreateDateColumn()
@@ -19,13 +19,13 @@ export class User {
   @UpdateDateColumn()
   updatedAt: string
 
-  @Column()
+  @Column({ type: String })
   name: string
 
-  @Column('int')
+  @Column({ type: Number })
   age: number
 
-  @Column()
+  @Column({ type: String })
   password: string
 
   @OneToMany(() => Order, (order) => order.user)

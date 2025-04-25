@@ -2,16 +2,21 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from 'typeorm'
+import { OrderLine } from './OrderLine.entity'
 import { Product } from './Product.entity'
 
 @Entity()
 export class ProductVariant {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn('uuid', {
+    primaryKeyConstraintName: 'pk_productvariant_id'
+  })
   id: string
 
   @CreateDateColumn()
@@ -20,22 +25,29 @@ export class ProductVariant {
   @UpdateDateColumn()
   updatedAt: string
 
-  @Column()
+  @Column({ type: String })
   name: string
 
-  @Column('text')
+  @Column({ type: String })
   description: string
 
-  @Column()
+  @Column({ type: String })
   sku: string
 
-  @Column('int')
+  @Column({ type: Number })
   price: number
 
-  @Column('uuid')
+  @ManyToOne(() => Product, (product) => product.variants)
+  @JoinColumn({
+    name: 'productId',
+    foreignKeyConstraintName: 'fk_productvariant_product'
+  })
+  product: Product
+
+  @Column({ type: String })
+  @Index('idx_productvariant_product_id')
   productId: string
 
-  @ManyToOne(() => Product, (product) => product.variants)
-  @JoinColumn({ name: 'productId' })
-  product: Product
+  @OneToMany(() => OrderLine, (orderLine) => orderLine.productVariant)
+  orderLines: OrderLine[]
 }

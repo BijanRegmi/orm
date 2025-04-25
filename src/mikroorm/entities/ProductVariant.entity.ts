@@ -1,17 +1,19 @@
 import {
+  BaseEntity,
   Collection,
   Entity,
+  Index,
   ManyToOne,
   OneToMany,
   type Opt,
   PrimaryKey,
   Property
 } from '@mikro-orm/core'
-import { OrderLine } from './OrderLine'
-import { Product } from './Product'
+import { OrderLine } from './OrderLine.entity'
+import { Product } from './Product.entity'
 
 @Entity()
-export class ProductVariant {
+export class ProductVariant extends BaseEntity {
   @PrimaryKey({ type: 'uuid', defaultRaw: `uuid_generate_v4()` })
   id!: string & Opt
 
@@ -31,21 +33,26 @@ export class ProductVariant {
   })
   updatedAt!: Date & Opt
 
-  @Property({ length: -1 })
+  @Property({ type: 'string', length: -1 })
   name!: string
 
-  @Property({ type: 'text' })
+  @Property({ type: 'string', length: -1 })
   description!: string
 
-  @Property({ length: -1 })
+  @Property({ type: 'string', length: -1 })
   sku!: string
 
-  @Property()
+  @Property({ type: 'integer' })
   price!: number
 
+  @Index({
+    name: 'idx_productvariant_product_id',
+    expression:
+      'CREATE INDEX idx_productvariant_product_id ON public.product_variant USING btree ("productId")'
+  })
   @ManyToOne({ entity: () => Product, fieldName: 'productId' })
   productId!: Product
 
-  @OneToMany({ entity: () => OrderLine, mappedBy: 'productvariantId' })
+  @OneToMany({ entity: () => OrderLine, mappedBy: 'productVariantId' })
   orderLineCollection = new Collection<OrderLine>(this)
 }

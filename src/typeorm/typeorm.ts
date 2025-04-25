@@ -2,8 +2,7 @@ import 'reflect-metadata'
 import { config } from 'dotenv'
 import { DataSource } from 'typeorm'
 
-import entities from './entities'
-import { User } from './entities/User.entity'
+import entities, { User } from './entities'
 
 const KEY = 'TypeORM'
 
@@ -28,7 +27,7 @@ async function query() {
     relations: {
       orders: {
         lines: {
-          productvariant: {
+          productVariant: {
             product: true
           }
         }

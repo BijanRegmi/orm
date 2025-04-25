@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker'
 import { PrismaClient } from '@prisma/client'
+import { PopulateOptions } from './types'
 
 const prisma = new PrismaClient()
 
@@ -97,14 +98,6 @@ async function populateOrder(
       console.log(`Order: ${i}/${userLen} - ${j}/${orderCount}`)
     }
   }
-}
-
-type PopulateOptions = {
-  products: number
-  users: number
-  maxVariantsPerProducts: number
-  maxOrdersPerUser: number
-  maxLinesPerOrder: number
 }
 
 async function main(opts: PopulateOptions) {
