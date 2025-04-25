@@ -1,11 +1,13 @@
 {
   "name": "ald-concept",
+  "type": "module",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "sync": "ts-node src/utils/sync.ts && npx prisma db pull && npx prisma generate",
     "populate": "ts-node src/utils/populate.ts",
     "typeorm": "ts-node src/typeorm/typeorm.ts",
+    "mikroorm": "node --loader ts-node/esm --no-warnings src/mikroorm/mikro.ts",
     "prisma:query": "ts-node src/prisma/prisma_query.ts",
     "prisma:join": "ts-node src/prisma/prisma_join.ts"
   },
@@ -14,6 +16,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@mikro-orm/core": "^6.4.13",
+    "@mikro-orm/postgresql": "^6.4.13",
     "@prisma/client": "^5.13.0",
     "dotenv": "^16.4.5",
     "pg": "^8.11.5",
@@ -22,6 +26,8 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^8.4.1",
+    "@mikro-orm/cli": "^6.4.13",
+    "@mikro-orm/entity-generator": "^6.4.13",
     "@types/node": "^20.12.7",
     "prisma": "^5.13.0",
     "ts-node": "^10.9.2",
@@ -29,5 +35,11 @@
   },
   "prisma": {
     "schema": "src/prisma/schema.prisma"
+  },
+  "mikro-orm": {
+    "configPaths": [
+      "./src/mikroorm/config.ts",
+      "./dist/mikroorm/config.js"
+    ]
   }
 }
