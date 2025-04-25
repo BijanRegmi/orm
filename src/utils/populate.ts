@@ -6,7 +6,7 @@ const prisma = new PrismaClient()
 /**
  * Create `count` products each with 0-10 variants
  */
-async function populateProduct(count: number) {
+async function populateProduct(count: number, maxVariantsPerProducts: number) {
   for (let i = 0; i < count; i++) {
     const name = faker.commerce.productName()
     await prisma.product.create({
@@ -16,16 +16,16 @@ async function populateProduct(count: number) {
         description: faker.commerce.productDescription(),
         product_variant: {
           createMany: {
-            data: Array.from({ length: Math.floor(Math.random() * 10) }).map(
-              (_, idx) => {
-                return {
-                  name: `${name}_${idx}`,
-                  sku: name.toUpperCase().replace(/\s/g, '') + `${idx}`,
-                  description: faker.commerce.productDescription(),
-                  price: faker.number.int({ min: 1000, max: 9999999 })
-                }
+            data: Array.from({
+              length: Math.floor(Math.random() * maxVariantsPerProducts)
+            }).map((_, idx) => {
+              return {
+                name: `${name}_${idx}`,
+                sku: name.toUpperCase().replace(/\s/g, '') + `${idx}`,
+                description: faker.commerce.productDescription(),
+                price: faker.number.int({ min: 1000, max: 9999999 })
               }
-            )
+            })
           }
         }
       }
@@ -54,7 +54,10 @@ async function populateUser(count: number) {
  * For every user create 0-50 orders
  * Each order having 0-10 orderLines
  */
-async function populateOrder() {
+async function populateOrder(
+  maxOrdersPerUser: number,
+  maxLinesPerOrder: number
+) {
   const variantIds = await prisma.product_variant.findMany({
     select: { id: true }
   })
@@ -67,9 +70,9 @@ async function populateOrder() {
   const variantLen = variantIds.length
 
   for (let i = 0; i < userLen; i++) {
-    const orderCount = Math.floor(Math.random() * 50)
+    const orderCount = Math.floor(Math.random() * maxOrdersPerUser)
     for (let j = 0; j < orderCount; j++) {
-      const linesCount = Math.floor(Math.random() * 10)
+      const linesCount = Math.floor(Math.random() * maxLinesPerOrder)
       await prisma.order.create({
         data: {
           userId: userIds[i].id,
@@ -83,7 +86,7 @@ async function populateOrder() {
                 return {
                   quantity: Math.floor(Math.random() * 5),
                   unitPrice: faker.number.int({ min: 1000, max: 9999999 }),
-                  productvariantId:
+                  productVariantId:
                     variantIds[Math.floor(Math.random() * variantLen)].id
                 }
               })
@@ -96,10 +99,76 @@ async function populateOrder() {
   }
 }
 
-async function main() {
-  await populateProduct(10000)
-  await populateUser(1000)
-  await populateOrder()
+type PopulateOptions = {
+  products: number
+  users: number
+  maxVariantsPerProducts: number
+  maxOrdersPerUser: number
+  maxLinesPerOrder: number
 }
 
-main()
+async function main(opts: PopulateOptions) {
+  await populateProduct(opts.products, opts.maxVariantsPerProducts)
+  await populateUser(opts.users)
+  await populateOrder(opts.maxOrdersPerUser, opts.maxLinesPerOrder)
+}
+
+const defaultOptions: PopulateOptions = {
+  products: 10_000,
+  users: 1000,
+  maxVariantsPerProducts: 10,
+  maxOrdersPerUser: 50,
+  maxLinesPerOrder: 10
+}
+
+if (require.main === module) {
+  const options: PopulateOptions = {
+    products: defaultOptions.products,
+    users: defaultOptions.users,
+    maxVariantsPerProducts: defaultOptions.maxVariantsPerProducts,
+    maxOrdersPerUser: defaultOptions.maxOrdersPerUser,
+    maxLinesPerOrder: defaultOptions.maxLinesPerOrder
+  }
+
+  const args = process.argv.slice(2)
+  while (args.length) {
+    const [key, value] = args
+    switch (key) {
+      case '-p':
+      case '--products':
+        options.products = parseInt(value)
+        break
+      case '-u':
+      case '--users':
+        options.users = parseInt(value)
+        break
+      case '-v':
+      case '--variants':
+        options.maxVariantsPerProducts = parseInt(value)
+        break
+      case '-o':
+      case '--orders':
+        options.maxOrdersPerUser = parseInt(value)
+        break
+      case '-l':
+      case '--lines':
+        options.maxLinesPerOrder = parseInt(value)
+        break
+      default:
+        console.error(`Unknown option: ${key}`)
+        console.error(`Usage: ${process.argv[1]} [options]
+Options:
+  -p, --products <number>          Number of products to create (default: ${defaultOptions.products})
+  -u, --users <number>             Number of users to create (default: ${defaultOptions.users})
+  -v, --variants <number>          Max variants per product (default: ${defaultOptions.maxVariantsPerProducts})
+  -o, --orders <number>            Max orders per user (default: ${defaultOptions.maxOrdersPerUser})
+  -l, --lines <number>             Max lines per order (default: ${defaultOptions.maxLinesPerOrder})
+`)
+        process.exit(1)
+    }
+    args.shift()
+    args.shift()
+  }
+
+  main(options)
+}
