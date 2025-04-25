@@ -1,58 +1,61 @@
-import {
-  MikroORM as BaseMikroORM,
-  Connection,
-  EntityManager,
-  IDatabaseDriver
-} from '@mikro-orm/core'
-import {
-  MikroORM,
-  PostgreSqlDriver,
-  SqlEntityManager
-} from '@mikro-orm/postgresql'
-import { User } from './entities/User.js'
+import { config } from 'dotenv'
+config()
 
-let orm: BaseMikroORM<
-  PostgreSqlDriver,
-  SqlEntityManager<PostgreSqlDriver> &
-  EntityManager<IDatabaseDriver<Connection>>
->
+import { EntityGenerator } from '@mikro-orm/entity-generator'
+import { MikroORM } from '@mikro-orm/postgresql'
+import { Entities, User } from './entities'
+
+let orm: Awaited<ReturnType<typeof MikroORM.init>>
 
 const KEY = 'Mikro-ORM'
 
 async function init() {
-  orm = await MikroORM.init()
+  orm = await MikroORM.init({
+    clientUrl: process.env.DATABASE_URL,
+    allowGlobalContext: false,
+    entities: Entities,
+    extensions: [EntityGenerator],
+    debug: true
+  })
   console.log('====> MIKRO-ORM FETCHING ALL USERS')
 }
 
-async function query(em: any) {
+async function query() {
+  const em = orm.em.fork()
   console.time(KEY)
-  const users = await em.findAll(User, {
-    populate: [
-      'orderCollection.orderLineCollection.productvariantId.productId'
-    ],
-    disableIdentityMap: true,
-    cache: true
+  await em.findAll(User, {
+    populate: ['orderCollection.orderLineCollection.productvariantId.productId']
   })
   console.timeEnd(KEY)
+  em.flush()
+  console.log('\n\n')
+}
 
-  const userCount = users.length
-  const orderCount = users.reduce((l, u) => l + u.orderCollection.length, 0)
-  const linesCount = users.reduce(
-    (l, u) =>
-      l +
-      u.orderCollection.reduce((ll, o) => ll + o.orderLineCollection.length, 0),
-    0
+async function test() {
+  const em = orm.em.fork()
+  console.time(KEY)
+  const [users, total] = await em.findAndCount(
+    User,
+    { name: { $like: '%%' } },
+    {
+      fields: ['id', 'createdAt', 'name', 'orderCollection.id'],
+      limit: 800,
+      offset: 1,
+      orderBy: { createdAt: 'DESC' },
+      populate: ['orderCollection']
+    }
   )
-  console.log(
-    `=> FETCHED ${userCount} users\n=> FETCHED ${orderCount} orders\n=> FETCHED ${linesCount} lines`
-  )
+  console.timeEnd(KEY)
+  console.log('\n\n')
+  // console.log(total, users.length)
+  em.flush()
 }
 
 async function main() {
   await init()
-  const em = orm.em.fork()
   for (let i = 0; i < 10; i++) {
-    await query(em)
+    await test()
+    //   await query()
   }
 }
 

@@ -3,11 +3,11 @@ import {
   ManyToOne,
   type Opt,
   PrimaryKey,
-  Property
+  Property,
+  Ref
 } from '@mikro-orm/core'
-import { Order } from './Order.js'
-import { ProductVariant } from './ProductVariant.js'
-import { Ref } from '@mikro-orm/core'
+import { Order } from './Order'
+import { ProductVariant } from './ProductVariant'
 
 @Entity()
 export class OrderLine {

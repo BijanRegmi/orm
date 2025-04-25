@@ -6,7 +6,7 @@ import {
   PrimaryKey,
   Property
 } from '@mikro-orm/core'
-import { ProductVariant } from './ProductVariant.js'
+import { ProductVariant } from './ProductVariant'
 
 @Entity()
 export class Product {

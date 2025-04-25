@@ -6,7 +6,7 @@ import {
   PrimaryKey,
   Property
 } from '@mikro-orm/core'
-import { Order } from './Order.js'
+import { Order } from './Order'
 
 @Entity()
 export class User {
@@ -39,5 +39,5 @@ export class User {
   password!: string
 
   @OneToMany({ entity: () => Order, mappedBy: 'userId' })
-  orderCollection = new Collection<Order>(this)
+  orderCollection: Collection<Order>
 }

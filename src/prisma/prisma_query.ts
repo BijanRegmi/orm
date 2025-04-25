@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient({ log: ["query", "info", "warn", "error"] });
+const prisma = new PrismaClient({ log: ['query', 'info', 'warn', 'error'] })
 // const prisma = new PrismaClient()
 
 const KEY = 'Prisma Query'
@@ -42,10 +42,30 @@ async function query() {
   // );
 }
 
+async function test() {
+  console.time(KEY)
+  const users = await prisma.user.findMany({
+    where: { name: { startsWith: '' } },
+    relationLoadStrategy: 'join',
+    select: {
+      id: true,
+      createdAt: true,
+      name: true,
+      order: { select: { id: true } }
+    },
+    skip: 1,
+    take: 800,
+    orderBy: { createdAt: 'desc' }
+  })
+  console.timeEnd(KEY)
+  console.log(users.length, '\n\n')
+}
+
 async function main() {
   await init()
-  for (let i = 0; i < 1; i++) {
-    await query()
+  for (let i = 0; i < 10; i++) {
+    await test()
+    // await query()
   }
 }
 

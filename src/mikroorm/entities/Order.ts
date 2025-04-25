@@ -5,11 +5,11 @@ import {
   OneToMany,
   type Opt,
   PrimaryKey,
-  Property
+  Property,
+  Ref
 } from '@mikro-orm/core'
-import { OrderLine } from './OrderLine.js'
-import { User } from './User.js'
-import { Ref } from '@mikro-orm/core'
+import { OrderLine } from './OrderLine'
+import { User } from './User'
 
 @Entity()
 export class Order {
