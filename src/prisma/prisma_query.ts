@@ -1,26 +1,61 @@
 import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient({ log: ['query', 'info', 'warn', 'error'] })
-// const prisma = new PrismaClient()
+import measure from '../utils/measure'
+import { QueryResult } from '../utils/types'
 
-const KEY = 'Prisma Query'
+// const prisma = new PrismaClient({ log: ['query', 'info', 'warn', 'error'] })
+const prisma = new PrismaClient()
 
-async function init() {
-  await prisma.$connect()
-  console.log('====> PRISMA FETCHING ALL USERS with query')
+async function findMany() {
+  return prisma.user.findMany()
 }
 
-async function query() {
-  console.time(KEY)
-  await prisma.user.findMany({
+async function findManyWithRelations() {
+  return prisma.user.findMany({
     relationLoadStrategy: 'query',
     include: {
       order: {
         include: {
+          order_line: true
+        }
+      }
+    }
+  })
+}
+
+async function findManyWithRelationsFilterAndPagination() {
+  return prisma.user.findMany({
+    relationLoadStrategy: 'query',
+    where: {
+      name: { startsWith: 'B' }
+    },
+    skip: 10,
+    take: 10,
+    include: {
+      order: {
+        include: {
+          order_line: true
+        }
+      }
+    },
+    orderBy: {
+      createdAt: 'desc'
+    }
+  })
+}
+
+async function findManyWithNestedWhere() {
+  return prisma.user.findMany({
+    relationLoadStrategy: 'query',
+    where: {
+      order: {
+        some: {
           order_line: {
-            include: {
+            some: {
               product_variant: {
-                include: {
-                  product: true
+                product: {
+                  name: {
+                    startsWith: 'B'
+                  }
                 }
               }
             }
@@ -29,44 +64,93 @@ async function query() {
       }
     }
   })
-  console.timeEnd(KEY)
-
-  // const userCount = users.length;
-  // const orderCount = users.reduce((l, u) => l + u.order.length, 0);
-  // const linesCount = users.reduce(
-  //     (l, u) => l + u.order.reduce((ll, o) => ll + o.order_line.length, 0),
-  //     0,
-  // );
-  // console.log(
-  //     `=> FETCHED ${userCount} users\n=> FETCHED ${orderCount} orders\n=> FETCHED ${linesCount} lines`,
-  // );
 }
 
-async function test() {
-  console.time(KEY)
-  const users = await prisma.user.findMany({
-    where: { name: { startsWith: '' } },
-    relationLoadStrategy: 'join',
+async function findManyWithNestedWhereSelectAndPagination() {
+  return prisma.user.findMany({
+    relationLoadStrategy: 'query',
+    where: {
+      order: {
+        some: {
+          order_line: {
+            some: {
+              product_variant: {
+                product: {
+                  name: {
+                    startsWith: 'B'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     select: {
       id: true,
       createdAt: true,
-      name: true,
-      order: { select: { id: true } }
+      order: {
+        select: {
+          id: true,
+          createdAt: true,
+          order_line: {
+            select: {
+              id: true,
+              product_variant: {
+                select: {
+                  id: true,
+                  product: {
+                    select: {
+                      id: true,
+                      name: true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
-    skip: 1,
-    take: 800,
-    orderBy: { createdAt: 'desc' }
+    skip: 10,
+    take: 10,
+    orderBy: {
+      createdAt: 'desc'
+    }
   })
-  console.timeEnd(KEY)
-  console.log(users.length, '\n\n')
 }
 
 async function main() {
-  await init()
-  for (let i = 0; i < 10; i++) {
-    await test()
-    // await query()
-  }
+  await prisma.$connect()
+  const results: QueryResult[] = []
+
+  results.push(await measure('prisma-query-find-many', findMany))
+  results.push(
+    await measure(
+      'prisma-query-find-many-with-relations',
+      findManyWithRelations
+    )
+  )
+  results.push(
+    await measure(
+      'prisma-query-find-many-with-relations-filter-and-pagination',
+      findManyWithRelationsFilterAndPagination
+    )
+  )
+  results.push(
+    await measure(
+      'prisma-query-find-many-with-nested-where',
+      findManyWithNestedWhere
+    )
+  )
+  results.push(
+    await measure(
+      'prisma-query-find-many-with-nested-where-select-and-pagination',
+      findManyWithNestedWhereSelectAndPagination
+    )
+  )
+
+  await prisma.$disconnect()
 }
 
 main()

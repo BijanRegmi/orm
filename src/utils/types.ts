@@ -12,7 +12,6 @@ export type ORM = 'prisma' | 'drizzle' | 'typeorm'
 export type QueryResult = {
   query: string
   time: number
-  data: any
 }
 export type SingleBenchmarkRunResult = QueryResult[]
 export type MultipleBenchmarkRunResults = SingleBenchmarkRunResult[]

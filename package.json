@@ -6,8 +6,10 @@
     "sync": "ts-node src/utils/sync.ts && npx prisma db pull && npx prisma generate && npm run format .",
     "format": "prettier --write ",
     "populate": "ts-node src/utils/populate.ts",
-    "typeorm": "ts-node src/typeorm/typeorm.ts",
-    "mikroorm": "ts-node src/mikroorm/mikro.ts",
+    "typeorm:query": "ts-node src/typeorm/typeorm-query.ts",
+    "typeorm:join": "ts-node src/typeorm/typeorm-join.ts",
+    "mikroorm:selectin": "ts-node src/mikroorm/mikro-selectin.ts",
+    "mikroorm:joined": "ts-node src/mikroorm/mikro-joined.ts",
     "prisma:query": "ts-node src/prisma/prisma_query.ts",
     "prisma:join": "ts-node src/prisma/prisma_join.ts"
   },
