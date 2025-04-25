@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "sync": "ts-node src/sync.ts && npx prisma db pull && npx prisma generate",
-    "populate": "ts-node src/populate.ts",
-    "typeorm": "ts-node src/typeorm.ts",
-    "prisma:query": "ts-node src/prisma_query.ts",
-    "prisma:join": "ts-node src/prisma_join.ts"
+    "sync": "ts-node src/utils/sync.ts && npx prisma db pull && npx prisma generate",
+    "populate": "ts-node src/utils/populate.ts",
+    "typeorm": "ts-node src/typeorm/typeorm.ts",
+    "prisma:query": "ts-node src/prisma/prisma_query.ts",
+    "prisma:join": "ts-node src/prisma/prisma_join.ts"
   },
   "keywords": [],
   "author": "",
@@ -26,5 +26,8 @@
     "prisma": "^5.13.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
+  },
+  "prisma": {
+    "schema": "src/prisma/schema.prisma"
   }
 }
