@@ -111,8 +111,9 @@ async function countNestedWhere() {
 }
 
 async function findFirst() {
-  return dataSource.getRepository(Product).findOne({
-    relationLoadStrategy
+  return dataSource.getRepository(Product).find({
+    relationLoadStrategy,
+    take: 1
   })
 }
 
