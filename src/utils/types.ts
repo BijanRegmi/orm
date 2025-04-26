@@ -8,11 +8,19 @@ export type PopulateOptions = {
   maxLinesPerOrder: number
 }
 
-export type ORM = 'prisma' | 'drizzle' | 'typeorm'
+export type BenchmarkOptions = {
+  iterations: number
+  output: string
+  disableTypeorm: boolean
+  disablePrisma: boolean
+  disableMikro: boolean
+}
+
+export type ORM = 'prisma' | 'mikro' | 'typeorm'
 export type QueryResult = {
   query: string
   time: number
 }
 export type SingleBenchmarkRunResult = QueryResult[]
 export type MultipleBenchmarkRunResults = SingleBenchmarkRunResult[]
-export type AllResults = { [key in ORM]: MultipleBenchmarkRunResults }
+export type AllResults = { [key in ORM]?: MultipleBenchmarkRunResults }

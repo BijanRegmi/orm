@@ -11,8 +11,8 @@ import { ProductVariant } from './ProductVariant.entity'
 
 @Entity()
 export class Product extends BaseEntity {
-  @PrimaryKey({ type: 'uuid', defaultRaw: `uuid_generate_v4()` })
-  id!: string & Opt
+  @PrimaryKey({ type: 'integer' })
+  id!: number
 
   @Property({
     fieldName: 'createdAt',

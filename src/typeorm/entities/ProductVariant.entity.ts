@@ -14,10 +14,10 @@ import { Product } from './Product.entity'
 
 @Entity()
 export class ProductVariant {
-  @PrimaryGeneratedColumn('uuid', {
+  @PrimaryGeneratedColumn('increment', {
     primaryKeyConstraintName: 'pk_productvariant_id'
   })
-  id: string
+  id: number
 
   @CreateDateColumn()
   createdAt: string
@@ -44,9 +44,9 @@ export class ProductVariant {
   })
   product: Product
 
-  @Column({ type: String })
+  @Column({ type: Number })
   @Index('idx_productvariant_product_id')
-  productId: string
+  productId: number
 
   @OneToMany(() => OrderLine, (orderLine) => orderLine.productVariant)
   orderLines: OrderLine[]

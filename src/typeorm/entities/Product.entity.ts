@@ -10,7 +10,9 @@ import { ProductVariant } from './ProductVariant.entity'
 
 @Entity()
 export class Product {
-  @PrimaryGeneratedColumn('uuid', { primaryKeyConstraintName: 'pk_product_id' })
+  @PrimaryGeneratedColumn('increment', {
+    primaryKeyConstraintName: 'pk_product_id'
+  })
   id: string
 
   @CreateDateColumn()

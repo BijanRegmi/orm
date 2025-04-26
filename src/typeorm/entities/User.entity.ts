@@ -10,8 +10,10 @@ import { Order } from './Order.entity'
 
 @Entity()
 export class User {
-  @PrimaryGeneratedColumn('uuid', { primaryKeyConstraintName: 'pk_user_id' })
-  id: string
+  @PrimaryGeneratedColumn('increment', {
+    primaryKeyConstraintName: 'pk_user_id'
+  })
+  id: number
 
   @CreateDateColumn()
   createdAt: string

@@ -1,10 +1,10 @@
 import { config } from 'dotenv'
 config()
 
-import measure from '../utils/measure'
-import { QueryResult } from '../utils/types'
 import { MikroORM } from '@mikro-orm/postgresql'
-import Entities, { User } from './entities'
+import measure from '../utils/measure'
+import { QueryResult, SingleBenchmarkRunResult } from '../utils/types'
+import Entities, { OrderLine, Product, User } from './entities'
 
 let orm: Awaited<ReturnType<typeof MikroORM.init>>
 
@@ -13,10 +13,43 @@ type EntityManager = ReturnType<typeof orm.em.fork>
 let relationLoadStrategy: 'joined' | 'select-in' = 'joined'
 
 async function findMany(em: EntityManager) {
-  return em.find(User, {})
+  return em.find(
+    User,
+    {},
+    {
+      strategy: relationLoadStrategy
+    }
+  )
 }
 
-async function findManyWithRelations(em: EntityManager) {
+async function findManyWithToOneRelationJoined(em: EntityManager) {
+  return em.find(
+    OrderLine,
+    {},
+    {
+      strategy: relationLoadStrategy,
+      populate: ['productVariantId.productId', 'orderId']
+    }
+  )
+}
+
+async function findManyWithToOneRelationJoinedWithPaginationAndFilter(
+  em: EntityManager
+) {
+  return em.find(
+    OrderLine,
+    { productVariantId: { productId: { name: { $ilike: 'B%' } } } },
+    {
+      strategy: relationLoadStrategy,
+      populate: ['productVariantId.productId', 'orderId'],
+      offset: 10,
+      limit: 10,
+      orderBy: { createdAt: 'DESC' }
+    }
+  )
+}
+
+async function findManyWithToManyRelationsJoined(em: EntityManager) {
   return em.find(
     User,
     {},
@@ -27,67 +60,69 @@ async function findManyWithRelations(em: EntityManager) {
   )
 }
 
-async function findManyWithRelationsFilterAndPagination(em: EntityManager) {
+async function findManyWithToManyRelationsJoinedWithPaginationAndFilter(
+  em: EntityManager
+) {
   return em.find(
     User,
     {
-      name: { $like: 'B%' }
+      orderCollection: { orderLineCollection: { quantity: { $gt: 10 } } }
     },
     {
       strategy: relationLoadStrategy,
+      populate: ['orderCollection.orderLineCollection'],
       offset: 10,
       limit: 10,
-      orderBy: { createdAt: 'DESC' },
-      populate: ['orderCollection.orderLineCollection']
+      orderBy: { createdAt: 'DESC' }
     }
   )
 }
 
-async function findManyWithNestedWhere(em: EntityManager) {
-  return em.find(
-    User,
-    {
-      orderCollection: {
-        orderLineCollection: {
-          productVariantId: {
-            productId: {
-              name: { $like: 'B%' }
+async function countNestedWhere(em: EntityManager) {
+  return em.count(User, {
+    orderCollection: {
+      orderLineCollection: {
+        productVariantId: {
+          productId: {
+            name: {
+              $ilike: 'B%'
             }
           }
         }
       }
-    },
-    { strategy: relationLoadStrategy }
+    }
+  })
+}
+
+async function findFirst(em: EntityManager) {
+  return em.find(
+    Product,
+    {},
+    {
+      strategy: relationLoadStrategy,
+      limit: 1
+    }
   )
 }
 
-async function findManyWithNestedWhereSelectAndPagination(em: EntityManager) {
-  return em.find(
-    User,
-    {
-      orderCollection: {
-        orderLineCollection: {
-          productVariantId: {
-            productId: {
-              name: { $like: 'B%' }
-            }
-          }
-        }
-      }
-    },
+async function findUniqueWithToOneRelationJoined(em: EntityManager) {
+  return em.findOne(
+    OrderLine,
+    { id: 10 },
     {
       strategy: relationLoadStrategy,
-      fields: [
-        'id',
-        'createdAt',
-        'orderCollection.id',
-        'orderCollection.orderLineCollection.id',
-        'orderCollection.orderLineCollection.productVariantId.id',
-        'orderCollection.orderLineCollection.productVariantId.productId.id'
-      ],
-      offset: 10,
-      limit: 10,
-      orderBy: { createdAt: 'DESC' }
+      populate: ['productVariantId.productId', 'orderId']
+    }
+  )
+}
+
+async function findUniqueWithToManyRelationsJoined(em: EntityManager) {
+  return em.findOne(
+    User,
+    { id: 10 },
+    {
+      strategy: relationLoadStrategy,
+      populate: ['orderCollection.orderLineCollection']
     }
   )
 }
@@ -99,51 +134,76 @@ async function wrapAndMeasure(label: string, cb: (em: EntityManager) => any) {
   return result
 }
 
-async function main() {
+export async function main(): Promise<SingleBenchmarkRunResult> {
   orm = await MikroORM.init({
     clientUrl: process.env.DATABASE_URL,
     allowGlobalContext: false,
     entities: Entities,
-    debug: false
+    debug: !!process.env.DEBUG
   })
 
   const results: QueryResult[] = []
 
+  // warmup
+  await orm.connect()
+
   for (const strategry of ['select-in', 'joined'] as const) {
     relationLoadStrategy = strategry
     results.push(
+      await wrapAndMeasure(`${relationLoadStrategy}-find-many`, findMany)
+    )
+    results.push(
       await wrapAndMeasure(
-        `mikro-orm-${relationLoadStrategy}-find-many`,
-        findMany
+        `${relationLoadStrategy}-find-many-with-to-one-relation-joined`,
+        findManyWithToOneRelationJoined
       )
     )
     results.push(
       await wrapAndMeasure(
-        `mikro-orm-${relationLoadStrategy}-find-many-with-relations`,
-        findManyWithRelations
+        `${relationLoadStrategy}-find-many-with-to-one-relation-joined-with-pagination-and-filter`,
+        findManyWithToOneRelationJoinedWithPaginationAndFilter
       )
     )
     results.push(
       await wrapAndMeasure(
-        `mikro-orm-${relationLoadStrategy}-find-many-with-relations-filter-and-pagination`,
-        findManyWithRelationsFilterAndPagination
+        `${relationLoadStrategy}-find-many-with-to-many-relations-joined`,
+        findManyWithToManyRelationsJoined
       )
     )
     results.push(
       await wrapAndMeasure(
-        `mikro-orm-${relationLoadStrategy}-find-many-with-nested-where`,
-        findManyWithNestedWhere
+        `${relationLoadStrategy}-find-many-with-to-many-relations-joined-with-pagination-and-filter`,
+        findManyWithToManyRelationsJoinedWithPaginationAndFilter
       )
     )
     results.push(
       await wrapAndMeasure(
-        `mikro-orm-${relationLoadStrategy}-find-many-with-nested-where-select-and-pagination`,
-        findManyWithNestedWhereSelectAndPagination
+        `${relationLoadStrategy}-count-nested-where`,
+        countNestedWhere
+      )
+    )
+    results.push(
+      await wrapAndMeasure(`${relationLoadStrategy}-find-first`, findFirst)
+    )
+    results.push(
+      await wrapAndMeasure(
+        `${relationLoadStrategy}-find-unique-with-to-one-relation-joined`,
+        findUniqueWithToOneRelationJoined
+      )
+    )
+    results.push(
+      await wrapAndMeasure(
+        `${relationLoadStrategy}-find-unique-with-to-many-relations-joined`,
+        findUniqueWithToManyRelationsJoined
       )
     )
   }
 
   await orm.close(true)
+
+  return results
 }
 
-main()
+if (require.main === module) {
+  main()
+}

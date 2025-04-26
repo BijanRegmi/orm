@@ -2,47 +2,55 @@ import { config } from 'dotenv'
 config()
 
 import 'reflect-metadata'
-import { DataSource, ILike } from 'typeorm'
+import { DataSource, ILike, MoreThan } from 'typeorm'
 import measure from '../utils/measure'
-import { QueryResult } from '../utils/types'
-import entities, { User } from './entities'
+import { QueryResult, SingleBenchmarkRunResult } from '../utils/types'
+import entities, { OrderLine, Product, User } from './entities'
 
 const dataSource = new DataSource({
   type: 'postgres',
   url: process.env.DATABASE_URL,
   synchronize: false,
-  logging: false,
+  logging: !!process.env.DEBUG,
   entities: entities
 })
 
 let relationLoadStrategy: 'join' | 'query' = 'join'
 
 async function findMany() {
-  return dataSource.getRepository(User).find()
+  return dataSource.getRepository(User).find({
+    relationLoadStrategy
+  })
 }
 
-async function findManyWithRelations() {
-  return dataSource.getRepository(User).find({
+async function findManyWithToOneRelationJoined() {
+  return dataSource.getRepository(OrderLine).find({
     relationLoadStrategy,
     relations: {
-      orders: {
-        lines: true
-      }
+      productVariant: {
+        product: true
+      },
+      order: true
     }
   })
 }
 
-async function findManyWithRelationsFilterAndPagination() {
-  return dataSource.getRepository(User).find({
+async function findManyWithToOneRelationJoinedWithPaginationAndFilter() {
+  return dataSource.getRepository(OrderLine).find({
     relationLoadStrategy,
-    where: {
-      name: ILike('B%')
+    relations: {
+      productVariant: {
+        product: true
+      },
+      order: true
     },
     skip: 10,
     take: 10,
-    relations: {
-      orders: {
-        lines: true
+    where: {
+      productVariant: {
+        product: {
+          name: ILike('B%')
+        }
       }
     },
     order: {
@@ -51,8 +59,42 @@ async function findManyWithRelationsFilterAndPagination() {
   })
 }
 
-async function findManyWithNestedWhere() {
+async function findManyWithToManyRelationsJoined() {
   return dataSource.getRepository(User).find({
+    relationLoadStrategy,
+    relations: {
+      orders: {
+        lines: true
+      }
+    }
+  })
+}
+
+async function findManyWithToManyRelationsJoinedWithPaginationAndFilter() {
+  return dataSource.getRepository(User).find({
+    relationLoadStrategy,
+    relations: {
+      orders: {
+        lines: true
+      }
+    },
+    skip: 10,
+    take: 10,
+    where: {
+      orders: {
+        lines: {
+          quantity: MoreThan(10)
+        }
+      }
+    },
+    order: {
+      createdAt: 'DESC'
+    }
+  })
+}
+
+async function countNestedWhere() {
+  return dataSource.getRepository(User).count({
     relationLoadStrategy,
     where: {
       orders: {
@@ -68,90 +110,101 @@ async function findManyWithNestedWhere() {
   })
 }
 
-async function findManyWithNestedWhereSelectAndPagination() {
-  return dataSource.getRepository(User).find({
+async function findFirst() {
+  return dataSource.getRepository(Product).findOne({
+    relationLoadStrategy
+  })
+}
+
+async function findUniqueWithToOneRelationJoined() {
+  return dataSource.getRepository(OrderLine).findOne({
     relationLoadStrategy,
-    where: {
-      orders: {
-        lines: {
-          productVariant: {
-            product: {
-              name: ILike('B%')
-            }
-          }
-        }
-      }
-    },
-    select: {
-      id: true,
-      createdAt: true,
-      orders: {
-        id: true,
-        lines: {
-          id: true,
-          productVariant: {
-            id: true,
-            product: {
-              id: true,
-              name: true
-            }
-          }
-        }
-      }
-    },
     relations: {
-      orders: {
-        lines: {
-          productVariant: {
-            product: true
-          }
-        }
-      }
+      productVariant: {
+        product: true
+      },
+      order: true
     },
-    skip: 10,
-    take: 10,
-    order: {
-      createdAt: 'DESC'
+    where: {
+      id: 10
     }
   })
 }
 
-async function main() {
+async function findUniqueWithToManyRelationsJoined() {
+  return dataSource.getRepository(User).findOne({
+    relationLoadStrategy,
+    relations: {
+      orders: {
+        lines: true
+      }
+    },
+    where: {
+      id: 10
+    }
+  })
+}
+
+export async function main(): Promise<SingleBenchmarkRunResult> {
   await dataSource.initialize()
   const results: QueryResult[] = []
 
+  // warmup
+  for (let i = 0; i < 10; i++) await dataSource.query(`SELECT 1`)
+
   for (const strategry of ['query', 'join'] as const) {
     relationLoadStrategy = strategry
-    results.push(
-      await measure(`typeorm-${relationLoadStrategy}-find-many`, findMany)
-    )
+    results.push(await measure(`${relationLoadStrategy}-find-many`, findMany))
     results.push(
       await measure(
-        `typeorm-${relationLoadStrategy}-find-many-with-relations`,
-        findManyWithRelations
+        `${relationLoadStrategy}-find-many-with-to-one-relation-joined`,
+        findManyWithToOneRelationJoined
       )
     )
     results.push(
       await measure(
-        `typeorm-${relationLoadStrategy}-find-many-with-relations-filter-and-pagination`,
-        findManyWithRelationsFilterAndPagination
+        `${relationLoadStrategy}-find-many-with-to-one-relation-joined-with-pagination-and-filter`,
+        findManyWithToOneRelationJoinedWithPaginationAndFilter
       )
     )
     results.push(
       await measure(
-        `typeorm-${relationLoadStrategy}-find-many-with-nested-where`,
-        findManyWithNestedWhere
+        `${relationLoadStrategy}-find-many-with-to-many-relations-joined`,
+        findManyWithToManyRelationsJoined
       )
     )
     results.push(
       await measure(
-        `typeorm-${relationLoadStrategy}-find-many-with-nested-where-select-and-pagination`,
-        findManyWithNestedWhereSelectAndPagination
+        `${relationLoadStrategy}-find-many-with-to-many-relations-joined-with-pagination-and-filter`,
+        findManyWithToManyRelationsJoinedWithPaginationAndFilter
+      )
+    )
+    results.push(
+      await measure(
+        `${relationLoadStrategy}-count-nested-where`,
+        countNestedWhere
+      )
+    )
+    results.push(await measure(`${relationLoadStrategy}-find-first`, findFirst))
+    results.push(
+      await measure(
+        `${relationLoadStrategy}-find-unique-with-to-one-relation-joined`,
+        findUniqueWithToOneRelationJoined
+      )
+    )
+    results.push(
+      await measure(
+        `${relationLoadStrategy}-find-unique-with-to-many-relations-joined`,
+        findUniqueWithToManyRelationsJoined
       )
     )
   }
 
   await dataSource.destroy()
+
+  return results
 }
 
-main()
+if (require.main === module) {
+  main()
+}

@@ -9,14 +9,14 @@ datasource db {
 }
 
 model order {
-  id           String       @id(map: "pk_order_id") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  id           Int          @id(map: "pk_order_id") @default(autoincrement())
   createdAt    DateTime     @default(now()) @db.Timestamp(6)
   updatedAt    DateTime     @default(now()) @db.Timestamp(6)
   code         String       @db.VarChar
   total        Int
   totalWithTax Int
   taxRate      Int
-  userId       String       @db.Uuid
+  userId       Int
   user         user         @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_order_user")
   order_line   order_line[]
 
@@ -24,13 +24,13 @@ model order {
 }
 
 model order_line {
-  id               String          @id(map: "pk_orderline_id") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  id               Int             @id(map: "pk_orderline_id") @default(autoincrement())
   createdAt        DateTime        @default(now()) @db.Timestamp(6)
   updatedAt        DateTime        @default(now()) @db.Timestamp(6)
   quantity         Int
-  productVariantId String          @db.Uuid
-  orderId          String          @db.Uuid
   unitPrice        Int
+  productVariantId Int
+  orderId          Int
   order            order           @relation(fields: [orderId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_orderline_order")
   product_variant  product_variant @relation(fields: [productVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_orderline_productvariant")
 
@@ -39,7 +39,7 @@ model order_line {
 }
 
 model product {
-  id              String            @id(map: "pk_product_id") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  id              Int               @id(map: "pk_product_id") @default(autoincrement())
   createdAt       DateTime          @default(now()) @db.Timestamp(6)
   updatedAt       DateTime          @default(now()) @db.Timestamp(6)
   name            String            @db.VarChar
@@ -49,14 +49,14 @@ model product {
 }
 
 model product_variant {
-  id          String       @id(map: "pk_productvariant_id") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  id          Int          @id(map: "pk_productvariant_id") @default(autoincrement())
   createdAt   DateTime     @default(now()) @db.Timestamp(6)
   updatedAt   DateTime     @default(now()) @db.Timestamp(6)
   name        String       @db.VarChar
   description String       @db.VarChar
   sku         String       @db.VarChar
   price       Int
-  productId   String       @db.Uuid
+  productId   Int
   order_line  order_line[]
   product     product      @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_productvariant_product")
 
@@ -64,7 +64,7 @@ model product_variant {
 }
 
 model user {
-  id        String   @id(map: "pk_user_id") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  id        Int      @id(map: "pk_user_id") @default(autoincrement())
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @default(now()) @db.Timestamp(6)
   name      String   @db.VarChar

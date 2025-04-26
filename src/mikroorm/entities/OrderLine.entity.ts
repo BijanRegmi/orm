@@ -12,8 +12,8 @@ import { ProductVariant } from './ProductVariant.entity'
 
 @Entity()
 export class OrderLine extends BaseEntity {
-  @PrimaryKey({ type: 'uuid', defaultRaw: `uuid_generate_v4()` })
-  id!: string & Opt
+  @PrimaryKey({ type: 'integer' })
+  id!: number
 
   @Property({
     fieldName: 'createdAt',
@@ -34,6 +34,9 @@ export class OrderLine extends BaseEntity {
   @Property({ type: 'integer' })
   quantity!: number
 
+  @Property({ fieldName: 'unitPrice', type: 'integer' })
+  unitPrice!: number
+
   @Index({
     name: 'idx_orderline_productvariant_id',
     expression:
@@ -49,7 +52,4 @@ export class OrderLine extends BaseEntity {
   })
   @ManyToOne({ entity: () => Order, fieldName: 'orderId' })
   orderId!: Order
-
-  @Property({ fieldName: 'unitPrice', type: 'integer' })
-  unitPrice!: number
 }

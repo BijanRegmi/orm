@@ -14,8 +14,10 @@ import { User } from './User.entity'
 
 @Entity()
 export class Order {
-  @PrimaryGeneratedColumn('uuid', { primaryKeyConstraintName: 'pk_order_id' })
-  id: string
+  @PrimaryGeneratedColumn('increment', {
+    primaryKeyConstraintName: 'pk_order_id'
+  })
+  id: number
 
   @CreateDateColumn()
   createdAt: string
@@ -42,7 +44,7 @@ export class Order {
   @JoinColumn({ name: 'userId', foreignKeyConstraintName: 'fk_order_user' })
   user: User
 
-  @Column({ type: String })
+  @Column({ type: Number })
   @Index('idx_order_user_id')
-  userId: string
+  userId: number
 }

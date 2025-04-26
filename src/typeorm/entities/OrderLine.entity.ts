@@ -13,10 +13,10 @@ import { ProductVariant } from './ProductVariant.entity'
 
 @Entity()
 export class OrderLine {
-  @PrimaryGeneratedColumn('uuid', {
+  @PrimaryGeneratedColumn('increment', {
     primaryKeyConstraintName: 'pk_orderline_id'
   })
-  id: string
+  id: number
 
   @CreateDateColumn()
   createdAt: string
@@ -40,9 +40,9 @@ export class OrderLine {
   })
   productVariant: ProductVariant
 
-  @Column({ type: String })
+  @Column({ type: Number })
   @Index('idx_orderline_productvariant_id')
-  productVariantId: string
+  productVariantId: number
 
   @ManyToOne(() => Order, (order) => order.lines)
   @JoinColumn({
@@ -51,7 +51,7 @@ export class OrderLine {
   })
   order: Order
 
-  @Column({ type: String })
+  @Column({ type: Number })
   @Index('idx_orderline_order_id')
-  orderId: string
+  orderId: number
 }
