@@ -8,7 +8,8 @@
     "populate": "ts-node src/utils/populate.ts",
     "typeorm": "ts-node src/typeorm/typeorm.ts",
     "mikroorm": "ts-node src/mikroorm/mikro.ts",
-    "prisma": "ts-node src/prisma/prisma.ts"
+    "prisma": "ts-node src/prisma/prisma.ts",
+    "benchmark": "ts-node src/main.ts"
   },
   "keywords": [],
   "author": "",
