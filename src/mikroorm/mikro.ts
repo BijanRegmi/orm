@@ -10,6 +10,8 @@ let orm: Awaited<ReturnType<typeof MikroORM.init>>
 
 type EntityManager = ReturnType<typeof orm.em.fork>
 
+let relationLoadStrategy: 'joined' | 'select-in' = 'joined'
+
 async function findMany(em: EntityManager) {
   return em.find(User, {})
 }
@@ -18,7 +20,10 @@ async function findManyWithRelations(em: EntityManager) {
   return em.find(
     User,
     {},
-    { strategy: 'joined', populate: ['orderCollection.orderLineCollection'] }
+    {
+      strategy: relationLoadStrategy,
+      populate: ['orderCollection.orderLineCollection']
+    }
   )
 }
 
@@ -29,7 +34,7 @@ async function findManyWithRelationsFilterAndPagination(em: EntityManager) {
       name: { $like: 'B%' }
     },
     {
-      strategy: 'joined',
+      strategy: relationLoadStrategy,
       offset: 10,
       limit: 10,
       orderBy: { createdAt: 'DESC' },
@@ -52,7 +57,7 @@ async function findManyWithNestedWhere(em: EntityManager) {
         }
       }
     },
-    { strategy: 'joined' }
+    { strategy: relationLoadStrategy }
   )
 }
 
@@ -71,7 +76,7 @@ async function findManyWithNestedWhereSelectAndPagination(em: EntityManager) {
       }
     },
     {
-      strategy: 'joined',
+      strategy: relationLoadStrategy,
       fields: [
         'id',
         'createdAt',
@@ -104,31 +109,39 @@ async function main() {
 
   const results: QueryResult[] = []
 
-  results.push(await wrapAndMeasure('mikro-orm-joined-find-many', findMany))
-  results.push(
-    await wrapAndMeasure(
-      'mikro-orm-joined-find-many-with-relations',
-      findManyWithRelations
+  for (const strategry of ['select-in', 'joined'] as const) {
+    relationLoadStrategy = strategry
+    results.push(
+      await wrapAndMeasure(
+        `mikro-orm-${relationLoadStrategy}-find-many`,
+        findMany
+      )
     )
-  )
-  results.push(
-    await wrapAndMeasure(
-      'mikro-orm-joined-find-many-with-relations-filter-and-pagination',
-      findManyWithRelationsFilterAndPagination
+    results.push(
+      await wrapAndMeasure(
+        `mikro-orm-${relationLoadStrategy}-find-many-with-relations`,
+        findManyWithRelations
+      )
     )
-  )
-  results.push(
-    await wrapAndMeasure(
-      'mikro-orm-joined-find-many-with-nested-where',
-      findManyWithNestedWhere
+    results.push(
+      await wrapAndMeasure(
+        `mikro-orm-${relationLoadStrategy}-find-many-with-relations-filter-and-pagination`,
+        findManyWithRelationsFilterAndPagination
+      )
     )
-  )
-  results.push(
-    await wrapAndMeasure(
-      'mikro-orm-joined-find-many-with-nested-where-select-and-pagination',
-      findManyWithNestedWhereSelectAndPagination
+    results.push(
+      await wrapAndMeasure(
+        `mikro-orm-${relationLoadStrategy}-find-many-with-nested-where`,
+        findManyWithNestedWhere
+      )
     )
-  )
+    results.push(
+      await wrapAndMeasure(
+        `mikro-orm-${relationLoadStrategy}-find-many-with-nested-where-select-and-pagination`,
+        findManyWithNestedWhereSelectAndPagination
+      )
+    )
+  }
 
   await orm.close(true)
 }

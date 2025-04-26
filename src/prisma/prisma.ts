@@ -5,13 +5,15 @@ import { QueryResult } from '../utils/types'
 // const prisma = new PrismaClient({ log: ['query', 'info', 'warn', 'error'] })
 const prisma = new PrismaClient()
 
+let relationLoadStrategy: 'join' | 'query' = 'join'
+
 async function findMany() {
   return prisma.user.findMany()
 }
 
 async function findManyWithRelations() {
   return prisma.user.findMany({
-    relationLoadStrategy: 'join',
+    relationLoadStrategy,
     include: {
       order: {
         include: {
@@ -24,7 +26,7 @@ async function findManyWithRelations() {
 
 async function findManyWithRelationsFilterAndPagination() {
   return prisma.user.findMany({
-    relationLoadStrategy: 'join',
+    relationLoadStrategy,
     where: {
       name: { startsWith: 'B' }
     },
@@ -45,7 +47,7 @@ async function findManyWithRelationsFilterAndPagination() {
 
 async function findManyWithNestedWhere() {
   return prisma.user.findMany({
-    relationLoadStrategy: 'join',
+    relationLoadStrategy,
     where: {
       order: {
         some: {
@@ -68,7 +70,7 @@ async function findManyWithNestedWhere() {
 
 async function findManyWithNestedWhereSelectAndPagination() {
   return prisma.user.findMany({
-    relationLoadStrategy: 'join',
+    relationLoadStrategy,
     where: {
       order: {
         some: {
@@ -124,28 +126,36 @@ async function main() {
   await prisma.$connect()
   const results: QueryResult[] = []
 
-  results.push(await measure('prisma-join-find-many', findMany))
-  results.push(
-    await measure('prisma-join-find-many-with-relations', findManyWithRelations)
-  )
-  results.push(
-    await measure(
-      'prisma-join-find-many-with-relations-filter-and-pagination',
-      findManyWithRelationsFilterAndPagination
+  for (const strategry of ['query', 'join'] as const) {
+    relationLoadStrategy = strategry
+    results.push(
+      await measure(`prisma-${relationLoadStrategy}-find-many`, findMany)
     )
-  )
-  results.push(
-    await measure(
-      'prisma-join-find-many-with-nested-where',
-      findManyWithNestedWhere
+    results.push(
+      await measure(
+        `prisma-${relationLoadStrategy}-find-many-with-relations`,
+        findManyWithRelations
+      )
     )
-  )
-  results.push(
-    await measure(
-      'prisma-join-find-many-with-nested-where-select-and-pagination',
-      findManyWithNestedWhereSelectAndPagination
+    results.push(
+      await measure(
+        `prisma-${relationLoadStrategy}-find-many-with-relations-filter-and-pagination`,
+        findManyWithRelationsFilterAndPagination
+      )
     )
-  )
+    results.push(
+      await measure(
+        `prisma-${relationLoadStrategy}-find-many-with-nested-where`,
+        findManyWithNestedWhere
+      )
+    )
+    results.push(
+      await measure(
+        `prisma-${relationLoadStrategy}-find-many-with-nested-where-select-and-pagination`,
+        findManyWithNestedWhereSelectAndPagination
+      )
+    )
+  }
 
   await prisma.$disconnect()
 }

@@ -15,13 +15,15 @@ const dataSource = new DataSource({
   entities: entities
 })
 
+let relationLoadStrategy: 'join' | 'query' = 'join'
+
 async function findMany() {
   return dataSource.getRepository(User).find()
 }
 
 async function findManyWithRelations() {
   return dataSource.getRepository(User).find({
-    relationLoadStrategy: 'join',
+    relationLoadStrategy,
     relations: {
       orders: {
         lines: true
@@ -32,7 +34,7 @@ async function findManyWithRelations() {
 
 async function findManyWithRelationsFilterAndPagination() {
   return dataSource.getRepository(User).find({
-    relationLoadStrategy: 'join',
+    relationLoadStrategy,
     where: {
       name: ILike('B%')
     },
@@ -51,7 +53,7 @@ async function findManyWithRelationsFilterAndPagination() {
 
 async function findManyWithNestedWhere() {
   return dataSource.getRepository(User).find({
-    relationLoadStrategy: 'join',
+    relationLoadStrategy,
     where: {
       orders: {
         lines: {
@@ -68,7 +70,7 @@ async function findManyWithNestedWhere() {
 
 async function findManyWithNestedWhereSelectAndPagination() {
   return dataSource.getRepository(User).find({
-    relationLoadStrategy: 'join',
+    relationLoadStrategy,
     where: {
       orders: {
         lines: {
@@ -118,31 +120,36 @@ async function main() {
   await dataSource.initialize()
   const results: QueryResult[] = []
 
-  results.push(await measure('typeorm-join-find-many', findMany))
-  results.push(
-    await measure(
-      'typeorm-join-find-many-with-relations',
-      findManyWithRelations
+  for (const strategry of ['query', 'join'] as const) {
+    relationLoadStrategy = strategry
+    results.push(
+      await measure(`typeorm-${relationLoadStrategy}-find-many`, findMany)
     )
-  )
-  results.push(
-    await measure(
-      'typeorm-join-find-many-with-relations-filter-and-pagination',
-      findManyWithRelationsFilterAndPagination
+    results.push(
+      await measure(
+        `typeorm-${relationLoadStrategy}-find-many-with-relations`,
+        findManyWithRelations
+      )
     )
-  )
-  results.push(
-    await measure(
-      'typeorm-join-find-many-with-nested-where',
-      findManyWithNestedWhere
+    results.push(
+      await measure(
+        `typeorm-${relationLoadStrategy}-find-many-with-relations-filter-and-pagination`,
+        findManyWithRelationsFilterAndPagination
+      )
     )
-  )
-  results.push(
-    await measure(
-      'typeorm-join-find-many-with-nested-where-select-and-pagination',
-      findManyWithNestedWhereSelectAndPagination
+    results.push(
+      await measure(
+        `typeorm-${relationLoadStrategy}-find-many-with-nested-where`,
+        findManyWithNestedWhere
+      )
     )
-  )
+    results.push(
+      await measure(
+        `typeorm-${relationLoadStrategy}-find-many-with-nested-where-select-and-pagination`,
+        findManyWithNestedWhereSelectAndPagination
+      )
+    )
+  }
 
   await dataSource.destroy()
 }
