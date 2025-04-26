@@ -147,53 +147,46 @@ export async function main(): Promise<SingleBenchmarkRunResult> {
   // warmup
   await orm.connect()
 
-  for (const strategry of ['select-in', 'joined'] as const) {
-    relationLoadStrategy = strategry
-    results.push(
-      await wrapAndMeasure(`${relationLoadStrategy}-find-many`, findMany)
-    )
+  for (const strategy of ['query', 'join'] as const) {
+    relationLoadStrategy = strategy === 'query' ? 'select-in' : 'joined'
+    results.push(await wrapAndMeasure(`${strategy}-find-many`, findMany))
     results.push(
       await wrapAndMeasure(
-        `${relationLoadStrategy}-find-many-with-to-one-relation-joined`,
+        `${strategy}-find-many-with-to-one-relation-joined`,
         findManyWithToOneRelationJoined
       )
     )
     results.push(
       await wrapAndMeasure(
-        `${relationLoadStrategy}-find-many-with-to-one-relation-joined-with-pagination-and-filter`,
+        `${strategy}-find-many-with-to-one-relation-joined-with-pagination-and-filter`,
         findManyWithToOneRelationJoinedWithPaginationAndFilter
       )
     )
     results.push(
       await wrapAndMeasure(
-        `${relationLoadStrategy}-find-many-with-to-many-relations-joined`,
+        `${strategy}-find-many-with-to-many-relations-joined`,
         findManyWithToManyRelationsJoined
       )
     )
     results.push(
       await wrapAndMeasure(
-        `${relationLoadStrategy}-find-many-with-to-many-relations-joined-with-pagination-and-filter`,
+        `${strategy}-find-many-with-to-many-relations-joined-with-pagination-and-filter`,
         findManyWithToManyRelationsJoinedWithPaginationAndFilter
       )
     )
     results.push(
-      await wrapAndMeasure(
-        `${relationLoadStrategy}-count-nested-where`,
-        countNestedWhere
-      )
+      await wrapAndMeasure(`${strategy}-count-nested-where`, countNestedWhere)
     )
-    results.push(
-      await wrapAndMeasure(`${relationLoadStrategy}-find-first`, findFirst)
-    )
+    results.push(await wrapAndMeasure(`${strategy}-find-first`, findFirst))
     results.push(
       await wrapAndMeasure(
-        `${relationLoadStrategy}-find-unique-with-to-one-relation-joined`,
+        `${strategy}-find-unique-with-to-one-relation-joined`,
         findUniqueWithToOneRelationJoined
       )
     )
     results.push(
       await wrapAndMeasure(
-        `${relationLoadStrategy}-find-unique-with-to-many-relations-joined`,
+        `${strategy}-find-unique-with-to-many-relations-joined`,
         findUniqueWithToManyRelationsJoined
       )
     )

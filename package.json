@@ -29,6 +29,7 @@
     "@mikro-orm/cli": "^6.4.13",
     "@mikro-orm/entity-generator": "^6.4.13",
     "@types/node": "^20.12.7",
+    "prettier": "^3.5.3",
     "prisma": "^5.13.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"

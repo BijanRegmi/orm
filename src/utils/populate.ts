@@ -1,6 +1,8 @@
 import { faker } from '@faker-js/faker'
 import { PrismaClient } from '@prisma/client'
 import { PopulateOptions } from './types'
+import { mkdirSync, writeFileSync } from 'fs'
+import { join } from 'path'
 
 const prisma = new PrismaClient()
 
@@ -101,6 +103,12 @@ async function populateOrder(
 }
 
 async function main(opts: PopulateOptions) {
+  mkdirSync(join(__dirname, '../../.config'), { recursive: true })
+  writeFileSync(
+    join(__dirname, '../../.config/populate.json'),
+    JSON.stringify(opts, null, 2)
+  )
+
   await populateProduct(opts.products, opts.maxVariantsPerProducts)
   await populateUser(opts.users)
   await populateOrder(opts.maxOrdersPerUser, opts.maxLinesPerOrder)

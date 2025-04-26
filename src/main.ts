@@ -1,4 +1,4 @@
-import { writeFileSync } from 'fs'
+import { readFileSync, existsSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { main as mikro } from './mikroorm/mikro'
 import { main as prisma } from './prisma/prisma'
@@ -6,7 +6,8 @@ import { main as typeorm } from './typeorm/typeorm'
 import {
   AllResults,
   BenchmarkOptions,
-  MultipleBenchmarkRunResults
+  MultipleBenchmarkRunResults,
+  PopulateOptions
 } from './utils/types'
 
 async function main(options: BenchmarkOptions) {
@@ -52,8 +53,25 @@ async function main(options: BenchmarkOptions) {
     allResults.mikro = mikroResults
   }
 
+  let populateConfig: PopulateOptions | undefined = undefined
+  const populateConfigPath = join(__dirname, '../.config/populate.json')
+  if (existsSync(populateConfigPath)) {
+    populateConfig = JSON.parse(readFileSync(populateConfigPath, 'utf-8'))
+  }
+
   console.log(`=> Writing results to ${options.output}`)
-  writeFileSync(options.output, JSON.stringify(allResults, null, 2))
+  writeFileSync(
+    options.output,
+    JSON.stringify(
+      {
+        populateConfig,
+        benchmarkConfig: options,
+        results: allResults
+      },
+      null,
+      2
+    )
+  )
 
   return allResults
 }
